@@ -16,21 +16,23 @@
 
 package mastodon
 
+import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
 import fs2.data.csv._
 import fs2.data.csv.generic.semiauto._
 import fs2.data.text.utf8._
+import io.circe.generic.semiauto._
 import mau._
 import sttp.capabilities.fs2.Fs2Streams
 import sttp.client3._
-import io.circe.generic.semiauto._
 
 import java.time.LocalDate
 
 case class BlockedDomain(domain: String, reason: String, since: LocalDate)
 object BlockedDomain {
   implicit val csvDecoder = deriveCsvRowDecoder[BlockedDomain]
+  implicit val csvEncoder: RowEncoder[BlockedDomain] = RowEncoder.instance(blocked => NonEmptyList.one(blocked.domain))
   implicit val jsonEncoder = deriveEncoder[BlockedDomain]
 }
 

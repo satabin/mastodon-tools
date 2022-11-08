@@ -16,7 +16,6 @@
 
 package mastodon
 
-import cats.data.NonEmptyList
 import cats.effect._
 import com.comcast.ip4s._
 import fs2.data.csv._
@@ -36,8 +35,6 @@ object Main extends IOApp.Simple {
 
   object ReasonsQueryParamMatcher extends OptionalMultiQueryParamDecoderMatcher[String]("reasons")
 
-  implicit val stringEncoder: RowEncoder[String] = RowEncoder.instance(NonEmptyList.one(_))
-
   private def service(github: GithubClient[IO]) =
     HttpRoutes
       .of[IO] {
@@ -47,7 +44,7 @@ object Main extends IOApp.Simple {
           github
             .blockedDomains(reasons.getOrElse(Nil))
             .flatMap(blocked =>
-              Ok(fs2.Stream.emits(blocked).map(_.domain).through(encodeWithoutHeaders()).compile.string)
+              Ok(fs2.Stream.emits(blocked).through(encodeWithoutHeaders()).compile.string)
                 .map(_.withContentType(`Content-Type`(mediaType"text/csv")).putHeaders(
                   `Content-Disposition`("attachment", Map(ci"filename" -> "blocked_domains.csv")))))
         case GET -> Root / "blocked_domains" / "reasons" =>
